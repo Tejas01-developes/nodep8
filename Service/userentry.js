@@ -26,64 +26,28 @@ export const enteruser=async(req,resp)=>{
 
 }
 
-export const loginusers=(req,resp)=>{
+export const loginusers=async(req,resp)=>{
     const{email,password}=req.body;
 
-    db.query(
+   db.query(
        ' SELECT * FROM register WHERE email=?',
        [email],
-       (err,result)=>{
+      async (err,result)=>{
         if(err){
             return resp.status(400).json({success:false,message:"db error"})
         }
         if(result.length === 0){
             return resp.status(400).json({success:false,message:"no user with this email"})
         }
-        const compare=bcrypt.compare(password,result[0].password)
+        const compare=await bcrypt.compare(password,result[0].password)
         if(!compare){
             return resp.status(400).json({success:false,message:"password is incorrect"})
         }
         const access=accesstoken({email})
         const refresh=refrehtoken({email})
-
-        db.query(
-            'SELECT * FROM refresh WHERE email=?',
-            [email],
-            (err,res)=>{
-                if(err){
-                    return resp.status(400).json({success:false,message:"db error"})
-                }
-                if(res.length === 0){
-                    db.query(
-                        'INSERT INTO refresh (email,refrehstoken) VALUES (?,?)',
-                        [email,refresh],
-                        (err)=>{
-                            if(err){
-                                return resp.status(400).json({success:false,message:"db insert failed"})
-                            }
-                            return resp.status(200).json({success:true,message:"inserted"})
-                        }
-                    )
-                }
-               const createdtime=res[0].created_at;
-               const now=new Date();
-               const datetime=now.toLocaleString()
-               if(createdtime - datetime >= 7){
-                db.query(
-                    'UPDATE refresh SET refreshtoken=? WHERE email=?',
-                    [refresh,email],
-                    (err)=>{
-                        if(err){
-                            return resp.status(400).json({success:false,message:"db update error"})
-                        }
-                        return resp.status(200).json({success:true,message:"update success"})
-                        }
-                )
-               }
-
-            }
-        )
-
+console.log("access:",access)
+console.log("refresh:",refresh)
+       
 resp.cookie("refresh",refresh,{
     httpOnly:true,
     sameSite:"Lax",
