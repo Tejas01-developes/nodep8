@@ -2,19 +2,22 @@ import express, { json } from 'express';
 import http from 'http';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import router from './routes/Routes1.js';
 
 
 
 dotenv.config();
 const app=express();
+app.use(express.urlencoded({extended:true}))
 app.use(json());
-const server=http.createServer(app);
 app.use(cors({
-    origin:process.env.FRONT_ORIGIN,
-    allowedHeaders:['GET','POST','PUT','DELETE'],
+    origin:'http://localhost:5173',
+    methods:['GET','POST','PUT','DELETE'],
     credentials:true
 }))
+const server=http.createServer(app);
 
+app.use("/apis",router)
 
 
 
