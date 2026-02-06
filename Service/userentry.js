@@ -37,6 +37,7 @@ export const loginusers=async(req,resp)=>{
             return resp.status(400).json({success:false,message:"db error"})
         }
         if(result.length === 0){
+            refresh=refrehtoken({email})
             return resp.status(400).json({success:false,message:"no user with this email"})
         }
         const compare=await bcrypt.compare(password,result[0].password)
@@ -44,19 +45,60 @@ export const loginusers=async(req,resp)=>{
             return resp.status(400).json({success:false,message:"password is incorrect"})
         }
         const access=accesstoken({email})
-        const refresh=refrehtoken({email})
-console.log("access:",access)
-console.log("refresh:",refresh)
+       let refresh;
        
-resp.cookie("refresh",refresh,{
-    httpOnly:true,
-    sameSite:"Lax",
-    secure:true,
-    path:"/"
-})
-return resp.status(200).json({success:true,message:"login success",access:access})
+        db.query(
+            'SELECT * FROM refresh WHERE email=?',
+            [email],
+            (err,res)=>{
+                if(err){
+                    return resp.status(400).json({success:false,message:"token db error"})
+                }
+                if(res.length === 0){
+                    refresh=refrehtoken({email})
+                  db.query(
+                    'INSERT INTO refresh (email,refreshtoken) VALUES (?,?)',
+                    [email,refresh],
+                    (err)=>{
+                        if(err){
+                            return resp.status(400).json({success:false,message:"token insert db error"})
+                        }
+               
 
+                    }
+                  )
+                }else{
+                    const createdat=new Date(res[0].created_at);
+                    const now=new Date();
+                    const diff=(now-createdat) / (1000 * 60 * 60 * 24)
+                    if(diff > 7){
+                        refresh=refrehtoken({email})
+                        db.query(
+                            'UPDATE refresh SET refreshtoken = ? ,created_at= NOW() WHERE email = ?',
+                            [refresh,email],
+                            (err)=>{
+                                if(err){
+                                    return resp.status(400).json({success:false,message:"errr in db token update"})
+                                }
+                                
+                            }
+                        )
 
+                    }else{
+                        refresh=res[0].refreshtoken
+                    }
+                }
+                resp.cookie("refresh",refresh,{
+                    httpOnly:true,
+                    sameSite:"Lax",
+                    secure:true,
+                    path:"/"
+                })
+                return resp.status(200).json({success:true,message:"login success",access:access})
+
+            }
+        )
+    
 
        }
     )
