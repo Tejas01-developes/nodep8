@@ -58,32 +58,41 @@ const randomid=Math.floor(10000 + Math.random() * 90000)
 db.query(
   'SELECT * FROM register WHERE email=?',
   [email],
-  (err,res)=>{
+ async (err,res)=>{
     if(err){
       return resp.status(400).json({success:false,message:"db email find error"})
     }
     if(res.length === 0){
-      googleinsert({email,name,id},resp)
-    }
+      refresh=refrehtoken({email})
+      await googleinsert({email,name,id},resp)
+    }else{
+   
     const createdat=new Date(res[0].created_at);
     const now=new Date();
     const diff=(now-createdat) / (1000 * 60 * 60 * 24)
-
-    updatetoken({refresh,email},resp);
-    resp.cookie("refresh",refresh,{
-      httpOnly:true,
-      sameSite:"Lax",
-      secure:true,
-      path:"/"
-    })
-    return resp.status(200).json({success:true,success:"google insertion success"})
+if(diff > 7){
+  refresh=refrehtoken({email});
+  updatetoken({refresh,email},resp);
+}else{
+}
+refresh=res[0].refreshtoken;
+    }
+  resp.cookie("refresh",refresh,{
+  httpOnly:true,
+  sameSite:"Lax",
+  secure:true,
+  path:"/"
+})
+// return resp.status(200).json({success:true,success:"google insertion success"})
+   
+   
   }
 )
 
 
 
 
-resp.redirect("http://localhost:5173");
+resp.redirect("http://localhost:5173/home");
   })
 
 export default router;
