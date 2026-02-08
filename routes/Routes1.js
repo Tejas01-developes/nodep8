@@ -1,10 +1,12 @@
 import express from 'express';
-import { enteruser, loginusers } from '../Service/userentry.js';
+import { enteruser, loginusers } from '../controller/userentry.js';
 import { refreshfilter } from '../filters/refreshfilter.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { accesstoken, refrehtoken } from '../Connections/tokens.js';
-import e from 'express';
+import qs from 'qs';
+import { db } from '../Connections/Mysql.js';
+import { googleinsert, updatetoken } from '../Services/services.js';
 dotenv.config();
 const router=express.Router();
 
@@ -19,41 +21,68 @@ router.get("/auth/google", (req, res) => {
       "&client_id=" + process.env.CLIENT_ID +
       "&redirect_uri=" + process.env.REDIRECT_URI +
       "&scope=openid%20email%20profile";
-  
+
     res.redirect(googleAuthURL);
   });
 
   router.get("/auth/google/callback",async(req,resp)=>{
    
-const{code}=req.query.code
+    const code = req.query.code;
 if(!code){
     return resp.status(400).json({success:false,message:"no code recived"})
 }
-const tokenres=await axios.post("https://oauth2.googleapis.com/token",{
+const tokenres=await axios.post("https://oauth2.googleapis.com/token",
+    qs.stringify({
     code,
     client_id:process.env.CLIENT_ID,
     client_secret:process.env.CLIENT_SECRET,
-    redirect_url:process.env.REDIRECT_URI,
+    redirect_uri:process.env.REDIRECT_URI,
     grant_type:"authorization_code"
-})
-
+}),
+{
+headers:{"Content-Type": "application/x-www-form-urlencoded"}
+}
+); 
 
 const{access_token}=tokenres.data;
 
 const userres=await axios.get("https://www.googleapis.com/oauth2/v2/userinfo",{
-    headers:{Authorization:`Bearer ${access_token}`},
+    headers:{Authorization:`Bearer ${access_token}`,
+   },
 })
 const{email,name,id,picture}=userres.data;
 
 const access=accesstoken({email})
-const refresh=refrehtoken({email})
+let refresh;
+const randomid=Math.floor(10000 + Math.random() * 90000)
+db.query(
+  'SELECT * FROM register WHERE email=?',
+  [email],
+  (err,res)=>{
+    if(err){
+      return resp.status(400).json({success:false,message:"db email find error"})
+    }
+    if(res.length === 0){
+      googleinsert({email,name,id},resp)
+    }
+    const createdat=new Date(res[0].created_at);
+    const now=new Date();
+    const diff=(now-createdat) / (1000 * 60 * 60 * 24)
 
-resp.cookie("refresh",refresh,{
-    httpOnly:true,
-                    sameSite:"Lax",
-                    secure:true,
-                    path:"/"
-})
+    updatetoken({refresh,email},resp);
+    resp.cookie("refresh",refresh,{
+      httpOnly:true,
+      sameSite:"Lax",
+      secure:true,
+      path:"/"
+    })
+    return resp.status(200).json({success:true,success:"google insertion success"})
+  }
+)
+
+
+
+
 resp.redirect("http://localhost:5173");
   })
 

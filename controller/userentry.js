@@ -1,30 +1,48 @@
 import {db} from '../Connections/Mysql.js';
 import bcrypt from 'bcrypt'
 import {accesstoken, refrehtoken} from '../Connections/tokens.js'
+import { inserttoken, insertuser, updatetoken } from '../Services/services.js';
 
 
+
+// export const enteruser=async(req,resp)=>{
+//         const{name,email,password,role}=req.body;
+//         if(!name || !email || !password || !role){
+//             return resp.status(400).json({success:false,message:"fill all the fields"})
+//         }
+//         const randomid=Math.floor(10000 + Math.random() * 90000)
+//         const hash=await bcrypt.hash(password,10);
+       
+//  db.query(
+//     'INSERT INTO register (id,name,email,password,role,provider) VALUES (?,?,?,?,?,?)',
+//     [randomid,name,email,hash,role,"local"],
+//     (err)=>{
+        
+//         if(err){
+//            return resp.status(400).json({success:false,message:"db error"})
+//         }
+//        return resp.status(200).json({success:true,message:"user entered"})
+//     }
+// )
+
+// }
 
 export const enteruser=async(req,resp)=>{
-        const{name,email,password,role}=req.body;
-        if(!name || !email || !password || !role){
-            return resp.status(400).json({success:false,message:"fill all the fields"})
-        }
-        const randomid=Math.floor(10000 + Math.random() * 90000)
-        const hash=await bcrypt.hash(password,10);
-       
- db.query(
-    'INSERT INTO register (id,name,email,password,role,provider) VALUES (?,?,?,?,?,?)',
-    [randomid,name,email,hash,role,"local"],
-    (err)=>{
-        
-        if(err){
-           return resp.status(400).json({success:false,message:"db error"})
-        }
-       return resp.status(200).json({success:true,message:"user entered"})
+    const{name,email,password,role}=req.body;
+    if(!name || !email || !password || !role){
+        return resp.status(400).json({success:false,message:"fill all the fields"})
     }
-)
+    
+   
+insertuser({name,email,password,role},resp)
 
 }
+
+
+
+
+
+
 
 export const loginusers=async(req,resp)=>{
     const{email,password}=req.body;
@@ -37,7 +55,7 @@ export const loginusers=async(req,resp)=>{
             return resp.status(400).json({success:false,message:"db error"})
         }
         if(result.length === 0){
-            refresh=refrehtoken({email})
+            
             return resp.status(400).json({success:false,message:"no user with this email"})
         }
         const compare=await bcrypt.compare(password,result[0].password)
@@ -56,33 +74,14 @@ export const loginusers=async(req,resp)=>{
                 }
                 if(res.length === 0){
                     refresh=refrehtoken({email})
-                  db.query(
-                    'INSERT INTO refresh (email,refreshtoken) VALUES (?,?)',
-                    [email,refresh],
-                    (err)=>{
-                        if(err){
-                            return resp.status(400).json({success:false,message:"token insert db error"})
-                        }
-               
-
-                    }
-                  )
+             inserttoken({email,refresh},resp)
                 }else{
                     const createdat=new Date(res[0].created_at);
                     const now=new Date();
                     const diff=(now-createdat) / (1000 * 60 * 60 * 24)
                     if(diff > 7){
                         refresh=refrehtoken({email})
-                        db.query(
-                            'UPDATE refresh SET refreshtoken = ? ,created_at= NOW() WHERE email = ?',
-                            [refresh,email],
-                            (err)=>{
-                                if(err){
-                                    return resp.status(400).json({success:false,message:"errr in db token update"})
-                                }
-                                
-                            }
-                        )
+                      updatetoken({refresh,email},resp)
 
                     }else{
                         refresh=res[0].refreshtoken
