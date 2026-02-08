@@ -14,8 +14,8 @@ export const enteruser=async(req,resp)=>{
     }
     
    
-insertuser({name,email,password,role},resp)
-
+await insertuser({name,email,password,role})
+return resp.status(200).json({success:true,message:"insert success"})
 }
 
 

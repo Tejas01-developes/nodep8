@@ -54,7 +54,7 @@ const{email,name,id,picture}=userres.data;
 
 const access=accesstoken({email})
 let refresh;
-const randomid=Math.floor(10000 + Math.random() * 90000)
+
 db.query(
   'SELECT * FROM register WHERE email=?',
   [email],
@@ -64,7 +64,7 @@ db.query(
     }
     if(res.length === 0){
       refresh=refrehtoken({email})
-      await googleinsert({email,name,id},resp)
+      await googleinsert({email,name,id})
     }else{
    
     const createdat=new Date(res[0].created_at);
@@ -72,7 +72,7 @@ db.query(
     const diff=(now-createdat) / (1000 * 60 * 60 * 24)
 if(diff > 7){
   refresh=refrehtoken({email});
-  updatetoken({refresh,email},resp);
+ await updatetoken({refresh,email},resp);
 }else{
 }
 refresh=res[0].refreshtoken;
@@ -83,11 +83,12 @@ refresh=res[0].refreshtoken;
   secure:true,
   path:"/"
 })
-// return resp.status(200).json({success:true,success:"google insertion success"})
+return resp.status(200).json({success:true,success:"google insertion success","access":access})
    
    
   }
 )
+
 
 
 
