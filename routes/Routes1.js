@@ -93,7 +93,7 @@ db.query(
   secure:true,
   path:"/"
 })
-// return resp.status(200).json({success:true,success:"google insertion success","access":access})
+ return resp.redirect("http://localhost:5173/home");
 
    
    }
@@ -101,7 +101,7 @@ db.query(
     }
   })
 
-resp.redirect("http://localhost:5173/home");
+// resp.redirect("http://localhost:5173/home");
 })
   
 
