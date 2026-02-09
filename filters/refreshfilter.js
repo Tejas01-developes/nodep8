@@ -4,7 +4,7 @@ import { accesstoken } from '../Connections/tokens.js';
 dotenv.config();
 export const refreshfilter=(req,resp)=>{
     const rhtoken=req.cookies.refresh
-    console.log(rhtoken)
+    console.log("refresh",rhtoken)
 
     if(!rhtoken){
         return resp.status(400).json({success:false,message:"no refresh token"})

@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { accesstoken, refrehtoken } from '../Connections/tokens.js';
 import qs from 'qs';
 import { db } from '../Connections/Mysql.js';
-import { googleinsert, updatetoken } from '../Services/services.js';
+import { googleinsert, inserttoken, updatetoken } from '../Services/services.js';
 dotenv.config();
 const router=express.Router();
 
@@ -66,34 +66,43 @@ db.query(
       refresh=refrehtoken({email})
       await googleinsert({email,name,id})
     }else{
-   
-    const createdat=new Date(res[0].created_at);
-    const now=new Date();
-    const diff=(now-createdat) / (1000 * 60 * 60 * 24)
-if(diff > 7){
-  refresh=refrehtoken({email});
- await updatetoken({refresh,email},resp);
-}else{
-}
-refresh=res[0].refreshtoken;
+   db.query(
+    'SELECT * FROM refresh WHERE email =?',
+    [email],
+    async(err,res)=>{
+      if(err){
+        return resp.status(400).json({success:false,message:"db token check error"})
+      }
+      if(res.length === 0){
+        refresh=refrehtoken({email})
+        await inserttoken({email,refresh})
+      }else{
+      const createdat=new Date(res[0].created_at);
+      const now=new Date();
+      const diff=(now-createdat) / (1000 * 60 * 60 * 24)
+  if(diff > 7){
+    refresh=refrehtoken({email});
+   await updatetoken({refresh,email},resp);
+    }else{
+    refresh=res[0].refreshtoken;
     }
+      }
   resp.cookie("refresh",refresh,{
   httpOnly:true,
   sameSite:"Lax",
   secure:true,
   path:"/"
 })
-return resp.status(200).json({success:true,success:"google insertion success","access":access})
+// return resp.status(200).json({success:true,success:"google insertion success","access":access})
+
    
-   
-  }
+   }
 )
-
-
-
-
+    }
+  })
 
 resp.redirect("http://localhost:5173/home");
-  })
+})
+  
 
 export default router;

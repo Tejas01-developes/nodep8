@@ -48,20 +48,21 @@ export const loginusers=async(req,resp)=>{
         db.query(
             'SELECT * FROM refresh WHERE email=?',
             [email],
-            (err,res)=>{
+            async(err,res)=>{
                 if(err){
                     return resp.status(400).json({success:false,message:"token db error"})
                 }
                 if(res.length === 0){
                     refresh=refrehtoken({email})
-             inserttoken({email,refresh},resp)
+             await inserttoken({email,refresh},resp)
                 }else{
                     const createdat=new Date(res[0].created_at);
                     const now=new Date();
                     const diff=(now-createdat) / (1000 * 60 * 60 * 24)
                     if(diff > 7){
                         refresh=refrehtoken({email})
-                      updatetoken({refresh,email},resp)
+                    
+                        await updatetoken({refresh,email},resp)
 
                     }else{
                         refresh=res[0].refreshtoken
