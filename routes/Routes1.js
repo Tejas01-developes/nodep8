@@ -7,11 +7,12 @@ import { accesstoken, refrehtoken } from '../Connections/tokens.js';
 import qs from 'qs';
 import { db } from '../Connections/Mysql.js';
 import { googleinsert, inserttoken, updatetoken } from '../Services/services.js';
+import { limit } from '../Connections/ratelimit.js';
 dotenv.config();
 const router=express.Router();
 
 router.post("/register",enteruser);
-router.post("/login",loginusers)
+router.post("/login",limit,loginusers)
 router.post("/newacc",refreshfilter);
 
 router.get("/auth/google", (req, res) => {

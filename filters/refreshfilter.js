@@ -13,9 +13,9 @@ export const refreshfilter=(req,resp)=>{
         if(err){
             return resp.status(400).json({success:false,message:"refreshfiletr error"})
         }
-        const user=decode.email
-        console.log(user)
-const access=accesstoken(user)
+        req.user=decode.email
+        
+const access=accesstoken(req.user)
  resp.status(200).json({success:true,access:access})
 
         
