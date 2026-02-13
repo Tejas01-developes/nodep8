@@ -6,8 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
+    "hello": "hello script",
+    "prestart": "echo starting program......",
     "start": "nodemon app.js",
-    "hello": "hello script"
+    "poststart": "echo server started"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +17,7 @@
   "type": "module",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.987.0",
-    "@aws-sdk/s3-request-presigner": "^3.988.0",
+    "@aws-sdk/s3-request-presigner": "^3.989.0",
     "axios": "^1.13.4",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",

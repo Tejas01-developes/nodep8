@@ -16,10 +16,10 @@ export const refreshfilter=(req,resp)=>{
        
         const user=decode.email;
     
-        console.log(user)
+       
 const access=accesstoken(user)
-console.log("access",access)
- resp.status(200).json({success:true,access:access})
+
+ resp.status(200).json({success:true,access:access,"email":user})
 
         
     })

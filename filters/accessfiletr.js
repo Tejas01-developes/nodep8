@@ -13,7 +13,7 @@ jwt.verify(accesstoken,process.env.ACCESS_SECRET,(err,decode)=>{
         return resp.status(400).json({success:false,message:"error in access token filter"})
     }
     req.user=decode;
-    console.log("decode",decode);
+    
     next()
 })
 

@@ -4,7 +4,7 @@ import { s3 } from '../Connections/aws.js';
 const storage=multer.memoryStorage();
 export const upload=multer({storage});
 import {db} from '../Connections/Mysql.js'
-
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 
 export const uploadimage=async(req,resp)=>{
@@ -13,7 +13,7 @@ if(!req.file){
 }
 const filename=req.body.name ? req.body.name :req.file.originalname
 const uniquename= `${Date.now()} - ${filename}`;
-console.log(uniquename)
+
 const params={
     Bucket:process.env.BUCKET_NAME,
     Key:uniquename,
@@ -29,12 +29,13 @@ const user=req.user.email;
 console.log(user)
 db.query(
    'INSERT INTO images (filename,email,url) VALUES (?,?,?)',
-   [filename,user,url],
+   [filename,user,uniquename],
    (err)=>{
     if(err){
         return resp.status(400).json({success:false,message:"db error of images"})
     }
-    return resp.status(200).json({success:true,message:"image added success","url":url})
+   
+    return resp.status(200).json({success:true,message:"image added success","url":url,"email":user})
    }
 )
 
@@ -45,4 +46,34 @@ db.query(
 
 }
 
+
+
+export const getfiles=async(req,resp)=>{
+    const user=req.user.email;
+    if(!user){
+        return resp.status(400).json({success:false,message:"no user logged in"})
+    }
+    db.query(
+        'SELECT url FROM images WHERE email=?',
+        [user],
+       async (err,res)=>{
+            if(err){
+                return resp.status(400).json({success:false,message:"error from db for images"})
+            }
+            if(res.length === 0){
+                return resp.status(400).json({success:false,message:"user has not uploadedd anything"})
+            }
+            const images=res[0];
+            console.log(images.url);
+            const command=new GetObjectCommand({
+                Bucket:process.env.BUCKET_NAME,
+                Key:images
+            })
+            const url=await getSignedUrl(s3,command,{expiresIn:600});
+            resp.status(200).json({success:true,"url":url});
+
+        }
+
+    )
+}
 
