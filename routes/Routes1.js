@@ -7,12 +7,12 @@ import { accesstoken, refrehtoken } from '../Connections/tokens.js';
 import qs from 'qs';
 import { db } from '../Connections/Mysql.js';
 import { googleinsert, inserttoken, updatetoken } from '../Services/services.js';
-import { limit } from '../Connections/ratelimit.js';
+// import { limit } from '../Connections/ratelimit.js';
 dotenv.config();
 const router=express.Router();
 
 router.post("/register",enteruser);
-router.post("/login",limit,loginusers)
+router.post("/login",loginusers)
 router.post("/newacc",refreshfilter);
 
 router.get("/auth/google", (req, res) => {
@@ -64,7 +64,7 @@ db.query(
       return resp.status(400).json({success:false,message:"db email find error"})
     }
     if(res.length === 0){
-      refresh=refrehtoken({email})
+      refresh=refrehtoken(email)
       await googleinsert({email,name,id})
     }else{
    db.query(
@@ -75,14 +75,14 @@ db.query(
         return resp.status(400).json({success:false,message:"db token check error"})
       }
       if(res.length === 0){
-        refresh=refrehtoken({email})
+        refresh=refrehtoken(email)
         await inserttoken({email,refresh})
       }else{
       const createdat=new Date(res[0].created_at);
       const now=new Date();
       const diff=(now-createdat) / (1000 * 60 * 60 * 24)
   if(diff > 7){
-    refresh=refrehtoken({email});
+    refresh=refrehtoken(email);
    await updatetoken({refresh,email},resp);
     }else{
     refresh=res[0].refreshtoken;

@@ -4,7 +4,7 @@ import { s3 } from '../Connections/aws.js';
 const storage=multer.memoryStorage();
 export const upload=multer({storage});
 import {db} from '../Connections/Mysql.js'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
 
 
 export const uploadimage=async(req,resp)=>{
@@ -25,7 +25,7 @@ await s3.send(new PutObjectCommand(params));
 const url = `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniquename}`;
 
 
-const user=req.user;
+const user=req.user.email;
 console.log(user)
 db.query(
    'INSERT INTO images (filename,email,url) VALUES (?,?,?)',

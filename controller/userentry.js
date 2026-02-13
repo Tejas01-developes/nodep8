@@ -53,14 +53,14 @@ export const loginusers=async(req,resp)=>{
                     return resp.status(400).json({success:false,message:"token db error"})
                 }
                 if(res.length === 0){
-                    refresh=refrehtoken({email})
+                    refresh=refrehtoken(email)
              await inserttoken({email,refresh},resp)
                 }else{
                     const createdat=new Date(res[0].created_at);
                     const now=new Date();
                     const diff=(now-createdat) / (1000 * 60 * 60 * 24)
                     if(diff > 7){
-                        refresh=refrehtoken({email})
+                        refresh=refrehtoken(email)
                     
                         await updatetoken({refresh,email},resp)
 

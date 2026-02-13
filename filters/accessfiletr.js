@@ -12,8 +12,8 @@ jwt.verify(accesstoken,process.env.ACCESS_SECRET,(err,decode)=>{
     if(err){
         return resp.status(400).json({success:false,message:"error in access token filter"})
     }
-    req.user=decode.email;
-    console.log("user",req.user);
+    req.user=decode;
+    console.log("decode",decode);
     next()
 })
 
