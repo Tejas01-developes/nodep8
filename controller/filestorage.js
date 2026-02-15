@@ -67,7 +67,7 @@ export const getfiles=async(req,resp)=>{
             console.log(images.url);
             const command=new GetObjectCommand({
                 Bucket:process.env.BUCKET_NAME,
-                Key:images
+                Key:images.url
             })
             const url=await getSignedUrl(s3,command,{expiresIn:600});
             resp.status(200).json({success:true,"url":url});
