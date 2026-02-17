@@ -28,8 +28,8 @@ const url = `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.ama
 const user=req.user.email;
 console.log(user)
 db.query(
-   'INSERT INTO images (filename,email,url) VALUES (?,?,?)',
-   [filename,user,uniquename],
+   'INSERT INTO images (filename,email,url,filetype) VALUES (?,?,?,?)',
+   [filename,user,uniquename,req.file.mimetype],
    (err)=>{
     if(err){
         return resp.status(400).json({success:false,message:"db error of images"})
@@ -54,7 +54,7 @@ export const getfiles=async(req,resp)=>{
         return resp.status(400).json({success:false,message:"no user logged in"})
     }
     db.query(
-        'SELECT url FROM images WHERE email=?',
+        'SELECT * FROM images WHERE email=?',
         [user],
        async (err,res)=>{
             if(err){
@@ -63,15 +63,21 @@ export const getfiles=async(req,resp)=>{
             if(res.length === 0){
                 return resp.status(400).json({success:false,message:"user has not uploadedd anything"})
             }
-            const images=res[0];
-            console.log(images.url);
-            const command=new GetObjectCommand({
-                Bucket:process.env.BUCKET_NAME,
-                Key:images.url
+            const images=res;
+        const url=await Promise.all(
+            images.map(async(row)=>{
+                const command=new GetObjectCommand({
+                    Bucket:process.env.BUCKET_NAME,
+                    Key:row.url
+                })
+              return  await getSignedUrl(s3,command,{expiresIn:600});
             })
-            const url=await getSignedUrl(s3,command,{expiresIn:600});
+        )
+        
+           
+            
             resp.status(200).json({success:true,"url":url});
-
+            
         }
 
     )
