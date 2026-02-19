@@ -64,20 +64,23 @@ export const getfiles=async(req,resp)=>{
                 return resp.status(400).json({success:false,message:"user has not uploadedd anything"})
             }
             const images=res;
+        
+           
         const url=await Promise.all(
             images.map(async(row)=>{
+               
                 const command=new GetObjectCommand({
                     Bucket:process.env.BUCKET_NAME,
                     Key:row.url,
-                    
+                  
                 })
               return  await getSignedUrl(s3,command,{expiresIn:600});
             })
         )
        
            
-            console.log(url)
-            resp.status(200).json({success:true,"url":url});
+            
+            resp.status(200).json({success:true,"url":url,"name":filenamee});
             
         }
 
